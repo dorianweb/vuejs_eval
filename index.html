@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+<style>
+    .table {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    .table td, .table th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+
+    .table tr:nth-child(even){background-color: #f2f2f2;}
+
+    .table tr:hover {background-color: #ddd;}
+
+    .table th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+
+
+    }
+</style>
+
+<div id="app">
+
+    <h1>{{this.title}}</h1>
+    <div>  {{this.date}}</div>
+
+    <table class="table">
+        <tr>
+            <th
+                    v-for="(element,index) in entete"
+                    :key="index"
+
+            >{{element}}</th>
+        </tr>
+        <tr
+                v-for=" produit in factures"
+                :key="produit.id"
+        >
+            <td>
+                {{produit.id}}
+            </td>
+            <td>
+                <input  v-model="produit.designation"  type="text">
+            </td>
+            <td>
+                <input  v-model="produit.qte" type="number">
+            </td>
+            <td>
+                <input   v-model="produit.pu_ht" type="number" step="any">
+            </td>
+            <td>
+                <input  v-model="produit.tva" type="number">
+            </td>
+            <td>
+                {{produit.p_ht}}
+            </td>
+            <td>
+                {{produit.p_ttc}}
+            </td>
+            <td>
+                <button @click="_delete(produit)" type="button">delete</button>
+            </td>
+        </tr>
+        <tr>
+            <td><button type="button" @click="add"> add</button></td>
+        </tr>
+    </table>
+    <div> montant HT  : {{this.totalHT}}</div>
+    <div>montant TTC  :{{this.totalTTC}}</div>
+
+
+
+
+    <div>{{this.factures}}</div>
+    <div>{{this.get}}</div>
+
+</div>
+<script>
+    var app = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                factures: [
+                    {
+                        "id": 0,
+                        "designation": "un avion",
+                        "qte": "3",
+                        "pu_ht": 210,
+                        "tva": 20,
+                        "p_ht": 756,
+                        "p_ttc": 907.2
+                    },
+                    {
+                        "id": 1,
+                        "designation": "un bateau",
+                        "qte": "4",
+                        "pu_ht": 20,
+                        "tva": 0,
+                        "p_ht": 80,
+                        "p_ttc": 80
+                    }
+                ],
+                entete:['id','designation','qte','pu ht','tva','Pht','P ttc'],
+                id:1,
+                title:'evaluation vue js',
+                date:'facture du'+new Date().toLocaleDateString(),
+                apiURL:'http://localhost:3000/',
+                get:'',
+
+            };
+        },
+        methods: {
+
+            add: function () {
+                this.id++;
+                /* partie local storage
+                this.factures.push({
+                    "id":this.id,
+                    "designation": "",
+                    "qte": 0,
+                    "pu_ht":0,
+                    "tva": 0,
+                    "p_ht":'' ,
+                    "p_ttc": ''
+                })
+                */
+                fetch(this.apiURL + 'factures', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id:'jai pas eu le temp de reflechir a comment etre sure davoir un nouvel id unique',
+                        designation: "",
+                        qte: 0,
+                        pu_ht:0,
+                        tva: 0,
+                        p_ht:'' ,
+                        p_ttc: ''
+                    })
+                });
+            },
+            _delete: function (item) {
+                //partie localstorage
+                //let index = this.factures.indexOf(item);
+                //this.factures.splice(index, 1);
+
+                //ajax
+                fetch(this.apiURL + 'factures/'+item.id , {
+                    method: "DELETE"
+                });
+            },
+        },
+        computed: {
+            totalTTC:function () {
+                let total=0;
+                this.factures.map((element,index) =>{
+                    total+= element.p_ttc;
+                });
+                return total;
+            },
+            totalHT:function () {
+                let total=0;
+                this.factures.map((element,index) =>{
+                    total+= element.p_ht;
+                });
+                return total;
+            }
+        },
+
+        watch: {
+            factures: {
+                deep: true,
+                handler(newVal){
+                    this.factures.map((element,index) =>{
+                        this.factures[index].p_ht=element.qte*element.pu_ht;
+                        this.factures[index].p_ttc=element.p_ht+((element.tva/100)*element.p_ht) ;
+                        //marche aussi
+                        //element.p_ttc=element.p_ht+((element.tva/100)*element.p_ht) ;
+
+
+                        fetch(this.apiURL + 'factures/' + element.id, {
+                            method: 'PATCH',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(element)
+                        });
+                    });
+
+                    //partie localstorage
+                   // localStorage.factures = JSON.stringify(newVal);
+                }
+
+            },
+            id:function (newVal) {
+                localStorage.id =newVal;
+            }
+
+        },
+
+        mounted() {
+            that=this;
+            fetch(this.apiURL+'factures', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: null,
+            })
+                .then(function(response){
+                if(response.ok){
+                    return response.json();
+                }
+            })
+                .then(function(data){
+                    that.factures=data;
+                  localStorage.factures = JSON.stringify(this.factures);
+                });
+
+            /*
+            //ici ce trouve la partie acces au localStorage
+
+            if (localStorage.factures) {
+                 this.factures = JSON.parse(localStorage.factures);
+                 // this.id = parseInt(localStorage.id);
+             }
+
+             */
+            if(localStorage.id){
+                this.id=eval(localStorage.id);
+            }
+
+        }
+    });
+</script>
+</body>
+</html>

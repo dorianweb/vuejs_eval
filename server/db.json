@@ -1,17 +1,26 @@
 {
   "factures": [
     {
-      "id": 1,
+      "id": 0,
       "designation": "un avion",
       "qte": "3",
       "pu_ht": 210,
       "tva": 20,
-      "p_ht": 756,
-      "p_ttc": 907.2
+      "p_ht": 630,
+      "p_ttc": 756
+    },
+    {
+      "id": 1,
+      "designation": "un bateau",
+      "qte": "5",
+      "pu_ht": 20,
+      "tva": 0,
+      "p_ht": 100,
+      "p_ttc": 100
     },
     {
       "id": 2,
-      "designation": "un bateau",
+      "designation": "un chat de test pour server ",
       "qte": "4",
       "pu_ht": 20,
       "tva": 0,
